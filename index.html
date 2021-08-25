@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        p {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    
+    <h1>Supported constraints:</h1>
+
+    <p id="supportedConstraints">
+
+    </p>
+
+    <h1 id="supportsFocusMode">
+        
+    </h1>
+
+    <h1>Available mediaDevices:</h1>
+
+    <p id="availableMediaDevices">
+
+    </p>
+
+
+    <div id="devices">
+
+    </div>
+
+    <script>
+        const supportedConstraints = navigator.mediaDevices.getSupportedConstraints();
+        document.querySelector("#supportedConstraints").innerHTML = JSON.stringify(supportedConstraints, null, 4);
+        if (supportedConstraints.focusMode) {
+            document.querySelector("#supportsFocusMode").innerHTML = "Supports focusMode constraint";
+        } else {
+            document.querySelector("#supportsFocusMode").innerHTML = "Doesn't support focusMode constraint";
+        }
+
+        const printDeviceCapabilities = async (device) => {
+            let mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    deviceId: device.deviceId
+                }
+            });
+
+            const devices = document.querySelector("#devices");
+            const deviceContainer = document.createElement("div");
+            const deviceHeadline = document.createElement("h1")
+            
+            deviceHeadline.innerHTML = device.deviceId;
+            deviceContainer.appendChild(deviceHeadline);
+            
+            const tracks = mediaStream.getTracks();
+            
+            for (const track of tracks) {
+                const trackCapabilities = track.getCapabilities();
+                const trackCapabilitiesElement = document.createElement("p");
+                trackCapabilitiesElement.innerHTML = JSON.stringify(trackCapabilities, null, 4);
+                deviceContainer.appendChild(trackCapabilitiesElement);
+                track.stop();
+            }
+            devices.appendChild(deviceContainer);
+            mediaStream = null;
+
+            return Promise.resolve();
+        }
+
+        navigator.mediaDevices.enumerateDevices().then(
+            async (availableMediaDevices) => {
+                document.querySelector("#availableMediaDevices").innerHTML = JSON.stringify(availableMediaDevices, null, 4);
+
+                for (const device of availableMediaDevices) {
+                    try {
+                        await printDeviceCapabilities(device);
+                    } catch (error) {
+                        console.warn("Unable to open", device);
+                    }
+                }
+            }
+        )
+        .catch(
+            (error) => {
+                console.error(error);
+            }
+        );
+    </script>
+</body>
+</html>
