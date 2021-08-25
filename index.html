@@ -78,7 +78,9 @@
 
                 for (const device of availableMediaDevices) {
                     try {
-                        await printDeviceCapabilities(device);
+                        if (device.deviceId) {
+                            await printDeviceCapabilities(device);
+                        }
                     } catch (error) {
                         console.warn("Unable to open", device);
                     }
