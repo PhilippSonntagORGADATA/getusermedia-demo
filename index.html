@@ -44,32 +44,35 @@
         }
 
         const printDeviceCapabilities = async (device) => {
-            let mediaStream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    deviceId: device.deviceId
+            try {
+                let mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        deviceId: device.deviceId
+                    }
+                });
+
+                const devices = document.querySelector("#devices");
+                const deviceContainer = document.createElement("div");
+                const deviceHeadline = document.createElement("h1")
+
+                deviceHeadline.innerHTML = device.deviceId;
+                deviceContainer.appendChild(deviceHeadline);
+
+                const tracks = mediaStream.getTracks();
+
+                for (const track of tracks) {
+                    const trackCapabilities = track.getCapabilities();
+                    const trackCapabilitiesElement = document.createElement("p");
+                    trackCapabilitiesElement.innerHTML = JSON.stringify(trackCapabilities, null, 4);
+                    deviceContainer.appendChild(trackCapabilitiesElement);
+                    track.stop();
                 }
-            });
-
-            const devices = document.querySelector("#devices");
-            const deviceContainer = document.createElement("div");
-            const deviceHeadline = document.createElement("h1")
-            
-            deviceHeadline.innerHTML = device.deviceId;
-            deviceContainer.appendChild(deviceHeadline);
-            
-            const tracks = mediaStream.getTracks();
-            
-            for (const track of tracks) {
-                const trackCapabilities = track.getCapabilities();
-                const trackCapabilitiesElement = document.createElement("p");
-                trackCapabilitiesElement.innerHTML = JSON.stringify(trackCapabilities, null, 4);
-                deviceContainer.appendChild(trackCapabilitiesElement);
-                track.stop();
+                devices.appendChild(deviceContainer);
+                mediaStream = null;
+                return Promise.resolve();
+            } catch (error) {
+                return Promise.reject(error);
             }
-            devices.appendChild(deviceContainer);
-            mediaStream = null;
-
-            return Promise.resolve();
         }
 
         navigator.mediaDevices.enumerateDevices().then(
@@ -78,10 +81,9 @@
 
                 for (const device of availableMediaDevices) {
                     try {
-                        if (device.deviceId) {
-                            await printDeviceCapabilities(device);
-                        }
+                        await printDeviceCapabilities(device);
                     } catch (error) {
+                        console.error(error);
                         console.warn("Unable to open", device);
                     }
                 }
